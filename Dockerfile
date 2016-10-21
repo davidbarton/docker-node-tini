@@ -29,29 +29,28 @@ RUN npm config set progress false && \
   chmod +x /tini
 
 # Copy only necessary files now, it helps docker with layer caching
-COPY package.json /home/${USER_NAME}/${APP_FOLDER}/
+ONBUILD COPY package.json /home/${USER_NAME}/${APP_FOLDER}/
 
 # Files copied with COPY are owned by root, change owner to user
-RUN chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/*
+ONBUILD RUN chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/*
 
 # Use our user from now
-USER ${USER_NAME}
+ONBUILD USER ${USER_NAME}
 
 # Set workdir
-WORKDIR /home/${USER_NAME}/${APP_FOLDER}
+ONBUILD WORKDIR /home/${USER_NAME}/${APP_FOLDER}
 
 # Install npm dependencies
-RUN npm install --quiet --depth 0
+ONBUILD RUN npm install --quiet --depth 0
 
-# Copy app files for production
-USER root
-COPY . /home/${USER_NAME}/${APP_FOLDER}/
-RUN chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/*
-USER ${USER_NAME}
+# Copy all app files now
+ONBUILD USER root
+ONBUILD COPY . /home/${USER_NAME}/${APP_FOLDER}/
+ONBUILD RUN chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/*
+ONBUILD USER ${USER_NAME}
 
 # Set tini as entrypoint
 ENTRYPOINT ["/tini", "--"]
 
-# Run node app, use tini
-CMD ["node", "index.js"]
-
+# Run node app
+CMD [ "npm", "start" ]
