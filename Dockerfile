@@ -1,4 +1,4 @@
-FROM node:6.5
+FROM node:6.9
 
 MAINTAINER David Barton <david.barton@posteo.de>
 
