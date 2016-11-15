@@ -3,10 +3,10 @@ FROM node:6.9
 MAINTAINER David Barton <david.barton@posteo.de>
 
 # Set versions and folders used
-ENV TINI_VERSION='v0.10.0' \
+ENV TINI_VERSION='v0.13.0' \
   NPM_VERSION='v3.10' \
-  USER_NAME='docker_user' \
-  APP_FOLDER='docker_app'
+  USER_NAME='node' \
+  APP_FOLDER='app'
 
 # Add tini init, see https://github.com/krallin/tini
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
@@ -20,19 +20,19 @@ RUN cd $(npm root -g)/npm \
 # Disable npm progress, it's faster
 # Set npm registry, may be faster, see https://github.com/npm/npm/issues/8836
 # Update npm for new features, do it quietly
-# Create an unprivileged user, never use root
+# Add bash for unpriviliged user
 # Make tini executable
 RUN npm config set progress false && \
   npm config set registry http://registry.npmjs.org/ && \
   npm install --global --quiet --depth 0 npm@${NPM_VERSION} && \
-  useradd --user-group --create-home --shell /bin/false ${USER_NAME} && \
+  usermod --shell /bin/bash node && \
   chmod +x /tini
 
 # Copy only necessary files now, it helps docker with layer caching
 ONBUILD COPY package.json /home/${USER_NAME}/${APP_FOLDER}/
 
 # Files copied with COPY are owned by root, change owner to user
-ONBUILD RUN chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}/*
+ONBUILD RUN chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}
 
 # Use our user from now
 ONBUILD USER ${USER_NAME}
